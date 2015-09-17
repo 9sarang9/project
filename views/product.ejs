@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+<style type="text/css">
+	li{
+		list-style-type: none;
+		display:block;
+	}
+</style>
+<body>
+
+<div class="container" ng-app="myApp" ng-controller="customersCtrl"> 
+	<!-- showing product list-->
+	<div ng-show="myvar">
+		<h1> product</h1>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>name</th>
+					<th>description</th>
+					<th>price</th>
+				</tr>
+			</thead>
+			<tbody>
+			<!-- adding new product -->
+				<tr>
+					<td><input class="form-control" ng-model="product.name"></td>
+					<td><input class="form-control" ng-model="product.description"></td>
+					<td><input class="form-control" ng-model="product.price"></td>
+					<td><button class="btn btn-primary" ng-click="addproduct();">insert</button></td>
+				</tr>
+				<!-- product list -->
+				<tr ng-repeat="product in productlist" >
+					<td>{{product.name}}</td>
+					<td>{{product.description}}</td>
+					<td>{{product.price}}</td>
+					<td><button class="btn btn-success" ng-click="preview(product._id);">preview</button></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<!-- showing single product -->
+	<div ng-hide="myvar">
+		<br><button class="btn btn-primary" ng-click="back();">back</button>
+		<h1>{{record.name}}</h1>
+		<p>{{record.description}}</p>
+		<span>{{record.price}}</span>
+		<ul>
+			<li ng-repeat="mycomment in comments">{{mycomment.comment}}</li>
+			<!-- adding comment -->
+			<li> <input ng-model="comment"><button class="btn btn-primary" ng-click="addcomment(record._id);">>></button></li>
+		</ul>
+	</div>
+</div>
+<script src= "http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+<script>
+var app = angular.module('myApp', []);
+app.controller('customersCtrl', function($scope, $http) {
+	var refresh=function(){
+	    $http.get("/list").success(function (response) {
+	    	$scope.productlist = response;
+	    	$scope.product="";
+		});
+	}
+
+	$scope.myvar=true;
+	refresh();
+    $scope.back = function(){
+    	console.log("back");
+    	$scope.myvar=true;
+    	 // refresh();
+    }
+
+    $scope.addproduct = function(){
+		$http.post("/create",$scope.product).success(function (response) {
+			refresh();
+		});
+	}
+
+	var bs = function(id){
+		$scope.myvar=false;
+		$http.get("/show?id="+id).success(function (response) {
+			$scope.record=response;
+			loadcomment(id);
+		});
+	}
+
+	$scope.preview = bs;
+
+	var loadcomment=function(id){
+		$http.get("/comment/list?id="+id).success(function (response) {
+	    	$scope.comments= response;
+	    	$scope.comment="";
+		});
+	}
+
+	$scope.addcomment = function(id){
+		var obj={
+			productid:id,
+			comment:$scope.comment
+		}
+		$http.post("/comment/add",obj).success(function (response) {
+			bs(id);
+		});
+	}
+});
+</script>
+</body>
+</html>
